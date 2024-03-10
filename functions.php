@@ -56,9 +56,7 @@ function readProducts(string $path): ?array
         return null;
     }
 
-    $products = fromJson($productsRead);
-
-    return $products ? $products : null;
+    return fromJson($productsRead);
 }
 
 function extractProduct(array $products, string $category, ?int $id = null): ?array
