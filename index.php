@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 include 'processes.php';
 
-$endpoint = '';
-$params = [];
-$method = '';
+$request = processURL();
 
-processURL($endpoint, $params, $method);
+$endpoint = $request['endpoint'];
+$params = $request['params'];
+$method = $request['method'];
 
 $products = readProducts('products.json');
 

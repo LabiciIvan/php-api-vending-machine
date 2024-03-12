@@ -42,19 +42,24 @@ function sendResponse(string $message, int $statusCode): void
     exit;
 }
 
-function processURL(string &$endpoint, array &$params, string &$method): void
+/**
+ * @return array{endpoint:string,params:array,method:string}
+ */
+function processURL(): array
 {
-    $url = parse_url($_SERVER['REQUEST_URI']);
-
-    $endpoint = str_replace('/', '', $url['path']);
+    $request = parse_url($_SERVER['REQUEST_URI']);
 
     $params = [];
 
-    if (isset($url['query'])) {
-        parse_str($url['query'], $params);
+    if (isset($request['query'])) {
+        parse_str($request['query'], $params);
     }
 
-    $method = $_SERVER['REQUEST_METHOD'];
+    return [
+        'endpoint' => str_replace('/', '', $request['path']), 
+        'params' => $params,
+        'method' => $_SERVER['REQUEST_METHOD'], 
+    ];
 }
 
 function readProducts(string $path): ?array
