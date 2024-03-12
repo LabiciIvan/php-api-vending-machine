@@ -123,11 +123,9 @@ function generateId(array $categoryOfProducts, string $idKeyName): int
 {
     $id = 0;
 
-    if (count($categoryOfProducts) > 0) {
-        foreach ($categoryOfProducts as $product) {
-            if ($product[$idKeyName] >= $id) {
-                $id = $product[$idKeyName] + 1;
-            }
+    foreach ($categoryOfProducts as $product) {
+        if ($product[$idKeyName] >= $id) {
+            $id = $product[$idKeyName] + 1;
         }
     }
 
