@@ -1,11 +1,20 @@
 <?php
 
+function logErrors(string $customMessage, string $errorMessage, int $line): void
+{
+    error_log(
+        date('Y-m-d H:i:s') . " - Line: {$line} = {$customMessage} {$errorMessage} " . PHP_EOL,
+        3,
+        'errors.txt'
+    );
+}
+
 function toJson(array $data): ?string
 {
     try {
-        $jsonEncoded = json_encode($data, JSON_ERROR_SYNTAX, 512);
+        $jsonEncoded = json_encode($data, JSON_THROW_ON_ERROR, 512);
     } catch (JsonException $e) {
-        echo $e->getMessage();
+        logErrors('Error encoding json', $e->getMessage(), __LINE__);
         return null;
     }
 
@@ -15,9 +24,9 @@ function toJson(array $data): ?string
 function fromJson(string $data): ?array
 {
     try {
-        $jsonDecoded = json_decode($data, true, 512, JSON_ERROR_SYNTAX);
+        $jsonDecoded = json_decode($data, true, 512, JSON_THROW_ON_ERROR);
     } catch (JsonException $e) {
-        echo $e->getMessage();
+        logErrors('Error decoding json', $e->getMessage(), __LINE__);
         return null;
     }
 
