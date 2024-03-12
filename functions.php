@@ -97,10 +97,10 @@ function addToList(array &$products, array $requestData, ?array $oldProduct = nu
     $fields = [ID, NAME, PRICE, QUANTITY];
 
     foreach ($fields as $property) {
-        $updatedProduct[$property] = (
-            isset($requestData[$property]) ? $requestData[$property] :
-            (isset($oldProduct[$property]) ? $oldProduct[$property] : null)
-        );
+        $isInRequest = isset($requestData[$property]) ? $requestData[$property] : null;
+        $isInOldProduct = isset($oldProduct[$property]) ? $oldProduct[$property] : null;
+
+        $updatedProduct[$property] = $isInRequest ? $isInRequest : ($isInOldProduct ?? null);
     }
 
     if (!isset($products[$requestData[CATEGORY]])) {
