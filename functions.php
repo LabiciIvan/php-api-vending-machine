@@ -155,7 +155,7 @@ function validateRequestData(array $mandatoryFields, ?array $requestData = null)
     return null;
 }
 
-function validateType(array $rules, array $requestData, bool $optional = false): ?array
+function validateType(array $rules, array $requestData, bool $optional = false): array
 {
     $errors = [];
 
@@ -181,7 +181,7 @@ function validateType(array $rules, array $requestData, bool $optional = false):
         }
     }
 
-    return $errors ? $errors : null;
+    return $errors;
 }
 
 /**
