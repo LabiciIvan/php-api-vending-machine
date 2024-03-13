@@ -103,15 +103,17 @@ function addToList(array &$products, array $requestData, ?array $oldProduct = nu
         $updatedProduct[$property] = $isInRequest ? $isInRequest : ($isInOldProduct ?? null);
     }
 
-    if (!isset($products[$requestData[CATEGORY]])) {
-        $products[$requestData[CATEGORY]] = [];
+    $category = $requestData[CATEGORY];
+
+    if (!isset($products[$category])) {
+        $products[$category] = [];
     }
 
     if ($newId) {
-        $updatedProduct[ID] = generateId($products[$requestData[CATEGORY]], ID);
-        $products[$requestData[CATEGORY]][] = $updatedProduct;
+        $updatedProduct[ID] = generateId($products[$category], ID);
+        $products[$category][] = $updatedProduct;
     } else {
-        foreach($products[$requestData[CATEGORY]] as &$product) {
+        foreach($products[$category] as &$product) {
             if ($product[ID] === $updatedProduct[ID]) {
                 $product = $updatedProduct;
             }
