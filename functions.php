@@ -159,16 +159,20 @@ function validateType(array $rules, array $requestData, bool $optional = false):
     foreach ($rules as $key => $value) {
         switch ($value) {
             case 'int':
-                if ($optional && isset($requestData[$key]) && !is_int($requestData[$key])) {
-                    $errors[] = "Key {$key} must be {$value}";
-                } elseif (!$optional && !is_int($requestData[$key])) {
+                if ($optional && !isset($requestData[$key])) {
+                    break;
+                }
+
+                if (!is_int($requestData[$key])) {
                     $errors[] = "Key {$key} must be {$value}";
                 }
                 break;
             case 'string':
-                if ($optional && isset($requestData[$key]) && !is_string($requestData[$key])) {
-                    $errors[] = "Key {$key} must be {$value}";
-                } elseif (!$optional && !is_string($requestData[$key])) {
+                if ($optional && !isset($requestData[$key])) {
+                    break;
+                }
+
+                if (!is_string($requestData[$key])) {
                     $errors[] = "Key {$key} must be {$value}";
                 }
                 break;
