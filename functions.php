@@ -134,23 +134,25 @@ function generateId(array $categoryOfProducts, string $idKeyName): int
     return $id;
 }
 
-function validateRequestData(array $mandatoryFields, ?array $requestData = null): void
+function validateRequestData(array $mandatoryFields, ?array $requestData = null): ?string
 {
     if ($requestData === null) {
-        sendResponse(toJson(['error' => 'Sent data is not correct']), 414);
+        return 'Sent data is not correct';
     }
 
     $missingFields = array_keys(array_diff_key($mandatoryFields, $requestData));
 
     if ($missingFields) {
-        sendResponse(toJson(['error' => 'Missing fields: ' . implode(', ', $missingFields)]), 400);
+        return 'Missing fields: ' . implode(', ', $missingFields);
     }
 
     $typeErrors = validateType($mandatoryFields, $requestData);
 
     if($typeErrors) {
-        sendResponse(toJson(['error' => implode(', ', $typeErrors)]), 500);
+        return implode(', ', $typeErrors);
     }
+
+    return null;
 }
 
 function validateType(array $rules, array $requestData, bool $optional = false): ?array

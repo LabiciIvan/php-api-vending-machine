@@ -22,7 +22,7 @@ function postProduct(array $products): void
 {
     $requestData = readProducts('php://input');
 
-    validateRequestData(
+    $validationError = validateRequestData(
         [
             CATEGORY => 'string',
             PRICE => 'string',
@@ -31,6 +31,10 @@ function postProduct(array $products): void
         ],
         $requestData
     );
+
+    if ($validationError) {
+        sendResponse(toJson(['errors' => $validationError]), 400);
+    }
 
     addToList($products, $requestData, null, true);
 
@@ -47,7 +51,7 @@ function putProduct(array $products): void
 {
     $requestData = readProducts('php://input');
 
-    validateRequestData(
+    $validationError = validateRequestData(
         [
             ID => 'int',
             CATEGORY => 'string',
@@ -58,6 +62,10 @@ function putProduct(array $products): void
         ],
         $requestData
     );
+
+    if ($validationError) {
+        sendResponse(toJson(['errors' => $validationError]), 400);
+    }
 
     $product = extractProduct($products, $requestData[CATEGORY], $requestData[ID]);
 
@@ -80,7 +88,11 @@ function patchProduct(array $products): void
 {
     $requestData = readProducts('php://input');
 
-    validateRequestData([ID => 'int', CATEGORY => 'string'], $requestData);
+    $validationError = validateRequestData([ID => 'int', CATEGORY => 'string'], $requestData);
+
+    if ($validationError) {
+        sendResponse(toJson(['errors' => $validationError]), 400);
+    }
 
     $allowedToPatch = [NAME => 'string', PRICE => 'string', QUANTITY => 'int'];
 
