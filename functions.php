@@ -79,17 +79,17 @@ function extractProduct(array $products, string $category, ?int $id = null): ?ar
         return null;
     }
 
-    if ($id !== null) {
-        foreach ($products[$category] as $product) {
-            if ($product['id'] == $id) {
-                return $product;
-            }
-        }
-
-        return null;
+    if ($id === null) {
+        return $products[$category];
     }
 
-    return $products[$category];
+    foreach ($products[$category] as $product) {
+        if ($product['id'] == $id) {
+            return $product;
+        }
+    }
+
+    return null;
 }
 
 function addToList(array &$products, array $requestData, ?array $oldProduct = null, bool $newId = false): void
