@@ -2,27 +2,31 @@
 
 declare(strict_types=1);
 
-include 'processes.php';
+require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/constants.php';
 
-$request = processURL();
+use App\Application;
+use App\Controllers\CategoryController;
+use App\Controllers\ProductController;
 
-$endpoint = $request['endpoint'];
-$params = $request['params'];
-$method = $request['method'];
+$app = new Application();
 
-$products = readProducts('products.json');
+$app->router->get('products-all', [ProductController::class, 'index']);
 
-switch ($endpoint) {
-    case 'product':
-        processProduct($products, $params, $method);
-        break;
-    case 'products-all':
-        processProductsAll($products, $params, $method);
-        break;
-    case 'product-pay':
-        processProductPay($products, $method);
-        break;
-    default:
-        sendResponse(toJson(['error' => '404 Not Found']), 404);
-        break;
-}
+$app->router->get('product', [ProductController::class, 'show']);
+
+$app->router->post('product', [ProductController::class, 'upload']);
+
+$app->router->put('product', [ProductController::class, 'update']);
+
+$app->router->patch('product', [ProductController::class, 'patch']);
+
+$app->router->delete('product', [ProductController::class, 'delete']);
+
+$app->router->post('product-pay', [ProductController::class, 'pay']);
+
+$app->router->get('category', [CategoryController::class, 'index']);
+
+$app->router->post('category', [CategoryController::class, 'upload']);
+
+$app->run();
