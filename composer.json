@@ -6,7 +6,8 @@
             "App\\": "./app",
             "App\\Controllers\\": "./app/controllers",
             "App\\Models\\": "./app/models",
-            "App\\Services\\": "app/services"
+            "App\\Services\\": "app/services",
+            "App\\Requests\\": "./app/requests"
         }
     },
     "authors": [

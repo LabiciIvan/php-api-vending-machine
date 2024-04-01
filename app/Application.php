@@ -3,11 +3,13 @@
 namespace App;
 
 use App\Router;
-use App\Request;
+use App\ServiceProvider;
 
 class Application extends Request {
 
     public Router $router;
+
+    public ServiceProvider $provider;
 
     private array $routes;
 
@@ -15,26 +17,37 @@ class Application extends Request {
     {
         parent::__construct();
 
-        $this->router = new Router;
+        $this->router   = new Router;
+        $this->provider = new ServiceProvider();
     }
 
     public function run()
     {
         $this->routes = $this->router->resolve();
 
-        $route = $this->routes[$this->method()][$this->endpoint()] ?? null;
+        $route = $this->routes[$this->method][$this->endpoint] ?? null;
 
         if ($route) {
             if (is_array($route)) {
 
-                $class = new $route[0]($this->params(), $this->requestBody());
-                $method = $route[1];
+                $className = $route[0];
+                $classMethod = $route[1];
+                $classInstance = new $className();
 
-                $class->$method();
+                $dependencyExists = $this->provider->exists($className, $classMethod);
+
+                if ($dependencyExists) {
+                    $dependencyInstance = $this->provider->inject($className, $classMethod);
+                    $classInstance->$classMethod($dependencyInstance);
+                }
+
+                $classInstance->$classMethod();
 
             } elseif (is_callable($route)) {
                 $route();
             }
         }
+
+        VM::sendResponse(VM::toJson(['error' => 'Route not supported']), 500);
     }
 }

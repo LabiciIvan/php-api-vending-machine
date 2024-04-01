@@ -6,13 +6,13 @@ use App\VM;
 
 class Request {
 
-    private ?string $endpoint = null;
+    public ?string $endpoint;
 
-    private ?string $method = null;
+    public ?string $method;
 
-    private ?array $params = null;
+    public ?array $params; 
 
-    private ?array $requestBody = null;
+    public ?array $body;
 
     public function __construct()
     {
@@ -22,26 +22,6 @@ class Request {
         $this->method = strtolower($request['method']);
         $this->params = $request['params'];
 
-        $this->requestBody = VM::readProducts('php://input');
-    }
-
-    protected function method(): string
-    {
-        return $this->method;
-    }
-
-    protected function endpoint(): string
-    {
-        return $this->endpoint;
-    }
-
-    protected function params(): ?array
-    {
-        return $this->params;
-    }
-
-    protected function requestBody(): ?array
-    {
-        return $this->requestBody;
+        $this->body = VM::readProducts('php://input');
     }
 }
