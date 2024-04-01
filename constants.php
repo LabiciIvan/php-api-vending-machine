@@ -1,5 +1,6 @@
 <?php
 
+const NEW_CATEGORY      = 'newCategory';
 const CATEGORY          = 'category';
 const ID                = 'id';
 const PRICE             = 'price';

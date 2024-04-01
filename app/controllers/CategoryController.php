@@ -21,13 +21,20 @@ class CategoryController {
         $this->categoryModel = new Category();
     }
 
-    public function index()
+    public function index(): void
+    {
+        $categories = $this->categoryModel->selectAll();
+
+        VM::sendResponse(VM::toJson(['data' => $categories]), 200);
+    }
+
+    public function show(): void
     {
         VM::validateURLParameters($this->params, 1, [CATEGORY]);
 
         $category = $this->params[CATEGORY];
     
-        $categoryProducts = $this->categoryModel->all($category);
+        $categoryProducts = $this->categoryModel->select($category);
 
         if ($categoryProducts === null) {
             VM::sendResponse(VM::toJson(['error' => 'Category products not found']), 404);
@@ -36,32 +43,104 @@ class CategoryController {
         VM::sendResponse(VM::toJson($categoryProducts), 200);
     }
 
-    public function upload()
+    public function create(): void
     {
         if ($this->requestBody === null) {
             VM::sendResponse(VM::toJson(['error' => 'Data sent is not in the right format']), 400);
         }
 
-        $validationError = VM::validateProducts(
-            $this->requestBody,
+        $validationError = VM::validateRequestData(
             [
-                ID =>       'int',
-                QUANTITY => 'int',
-                NAME =>     'string',
-                PRICE =>    'string'
-            ]
+                CATEGORY => 'string'
+            ],
+            $this->requestBody
         );
 
         if ($validationError) {
             VM::sendResponse(VM::toJson(['error' => $validationError]), 400);
         }
 
-        $isStored = $this->categoryModel->storeCategory($this->requestBody, __DIR__ . LOCATION_PRODUCT);
+        $categoryProducts = $this->categoryModel->select($this->requestBody[CATEGORY]);
 
-        if (!$isStored) {
-            VM::sendResponse((VM::toJson(['error' => 'Error uploading new products'])), 500);
+        if ($categoryProducts !== null) {
+            VM::sendResponse(VM::toJson(['error' => 'Category already exists']), 400);
         }
 
-        VM::sendResponse(VM::toJson(['data' => 'Products Uploaded']), 200);
+        $isCreated = $this->categoryModel->createCategory($this->requestBody[CATEGORY]);
+
+        if (!$isCreated) {
+            VM::sendResponse(VM::toJson(['error' => 'Error uploading new category']), 400);
+        }
+
+        VM::sendResponse(VM::toJson(['data' => 'Category successfully created']), 200);
+    }
+
+    public function update()
+    {
+        if ($this->requestBody === null) {
+            VM::sendResponse(VM::toJson(['error' => 'Data sent is not in the right format']), 400);
+        }
+
+        $validationError = VM::validateRequestData(
+            [
+                CATEGORY        => 'string',
+                NEW_CATEGORY    => 'string',
+            ],
+            $this->requestBody
+        );
+
+        if ($validationError) {
+            VM::sendResponse(VM::toJson(['error' => $validationError]), 400);
+        }
+
+        $categoryProducts = $this->categoryModel->select($this->requestBody[CATEGORY]);
+
+        if ($categoryProducts === null) {
+            VM::sendResponse(VM::toJson(['error' => 'Category doesn\'t exists']), 400);
+        }
+
+        $isUpdated = $this->categoryModel->updateCategory($this->requestBody);
+
+        if (!$isUpdated) {
+            VM::sendResponse((VM::toJson(['error' => 'Error updating category'])), 500);
+        }
+
+        VM::sendResponse(VM::toJson(['data' => 'Category updated']), 200);
+    }
+
+    public function delete():void
+    {
+        if ($this->requestBody === null) {
+            VM::sendResponse(VM::toJson(['error' => 'Data sent is not in the right format']), 400);
+        }
+
+        $validationError = VM::validateRequestData(
+            [
+                CATEGORY => 'string'
+            ],
+            $this->requestBody
+        );
+
+        if ($validationError) {
+            VM::sendResponse(VM::toJson(['error' => $validationError]), 400);
+        }
+
+        $categoryProducts = $this->categoryModel->select($this->requestBody[CATEGORY]);
+
+        if ($categoryProducts === null) {
+            VM::sendResponse(VM::toJson(['error' => 'Category doesn\'t exists']), 400);
+        }
+
+        if ($categoryProducts) {
+            VM::sendResponse(VM::toJson(['error' => 'Category cant\'t be deleted as contains products']), 400);
+        }
+
+        $isDeleted = $this->categoryModel->deleteCategory($this->requestBody[CATEGORY]);
+
+        if (!$isDeleted) {
+            VM::sendResponse((VM::toJson(['error' => 'Error deleting category'])), 500);
+        }
+
+        VM::sendResponse(VM::toJson(['data' => 'Category deleted']), 200);
     }
 }

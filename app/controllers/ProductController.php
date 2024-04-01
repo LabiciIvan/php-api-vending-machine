@@ -22,17 +22,9 @@ class ProductController {
 
     public function index(): void
     {
-        VM::validateURLParameters($this->params, 1, [CATEGORY]);
+        $products = $this->productModel->all();
 
-        $category = $this->params[CATEGORY];
-
-        $products = $this->productModel->all($category);
-
-        if ($products === null) {
-            VM::sendResponse(VM::toJson(['error' => 'Products not found']), 404);
-        }
-
-        VM::sendResponse(VM::toJson($products), 200);
+        VM::sendResponse(VM::toJson(['data' => $products]), 200);
     }
 
     public function show(): void
@@ -42,7 +34,7 @@ class ProductController {
         $category = $this->params[CATEGORY];
         $id = (int)$this->params[ID];
 
-        $product = $this->productModel->one($category, $id);
+        $product = $this->productModel->selectOne($category, $id);
 
         if ($product === null) {
             VM::sendResponse(VM::toJson(['error' => 'Product not found']), 404);
@@ -51,7 +43,7 @@ class ProductController {
         VM::sendResponse(VM::toJson($product), 200);
     }
 
-    public function upload()
+    public function create()
     {
         $validationError = VM::validateRequestData(
             [
@@ -67,19 +59,15 @@ class ProductController {
             VM::sendResponse(VM::toJson(['errors' => $validationError]), 400);
         }
 
-        $category = $this->requestBody[CATEGORY];
-
-        $categoryProducts = $this->productModel->all($category);
+        $categoryProducts = $this->productModel->selectAll($this->requestBody[CATEGORY]);
 
         if ($categoryProducts === null) {
-            VM::sendResponse(VM::toJson(['error' => 'Category doesn/\'t exists.']), 404);
+            VM::sendResponse(VM::toJson(['error' => 'Category doesn\'t exists.']), 404);
         }
 
-        $createdProduct = $this->productModel->create($this->requestBody);
+        $isCreated = $this->productModel->createProduct($this->requestBody);
 
-        $isStored = $this->productModel->storeProduct($createdProduct, $category, __DIR__ . LOCATION_PRODUCT);
-
-        if (!$isStored) {
+        if (!$isCreated) {
             VM::sendResponse((VM::toJson(['error' => 'Error uploading new product'])), 500);
         }
 
@@ -103,13 +91,13 @@ class ProductController {
             VM::sendResponse(VM::toJson(['errors' => $validationError]), 400);
         }
 
-        $product = $this->productModel->one($this->requestBody[CATEGORY], $this->requestBody[ID]);
+        $product = $this->productModel->selectOne($this->requestBody[CATEGORY], $this->requestBody[ID]);
 
         if ($product === null) {
             VM::sendResponse(VM::toJson(['error' => 'Product not found']), 404);
         }
 
-        $isUpdated = $this->productModel->update($product, $this->requestBody, __DIR__ . LOCATION_PRODUCT);
+        $isUpdated = $this->productModel->updateProduct($product, $this->requestBody);
 
         if (!$isUpdated) {
             VM::sendResponse((VM::toJson(['error' => 'Error updating new product'])), 500);
@@ -120,7 +108,13 @@ class ProductController {
 
     public function patch(): void
     {
-        $validationError = VM::validateRequestData([ID => 'int', CATEGORY => 'string'], $this->requestBody);
+        $validationError = VM::validateRequestData(
+            [
+                ID => 'int', 
+                CATEGORY => 'string'
+            ], 
+            $this->requestBody
+        );
 
         if ($validationError) {
             VM::sendResponse(VM::toJson(['errors' => $validationError]), 400);
@@ -134,13 +128,13 @@ class ProductController {
             VM::sendResponse(VM::toJson(['error' => $typeErrors]), 400);
         }
 
-        $product = $this->productModel->one($this->requestBody[CATEGORY], $this->requestBody[ID]);
+        $product = $this->productModel->selectOne($this->requestBody[CATEGORY], $this->requestBody[ID]);
 
         if ($product === null) {
             VM::sendResponse(VM::toJson(['error' => 'Product not found']), 404);
         }
 
-        $isPatched = $this->productModel->update($product, $this->requestBody, __DIR__ . LOCATION_PRODUCT, true);
+        $isPatched = $this->productModel->updateProduct($product, $this->requestBody, true);
 
         if (!$isPatched) {
             VM::sendResponse(VM::toJson(['error' => 'Error patch new product']), 400);
@@ -156,17 +150,16 @@ class ProductController {
         $category = $this->params[CATEGORY];
         $id = (int)$this->params[ID];
 
-        $product = $this->productModel->one($category, $id);
+        $product = $this->productModel->selectOne($category, $id);
 
         if ($product === null) {
             VM::sendResponse(VM::toJson(['error' => 'Product not found']), 404);
         }
 
-        $products = $this->productModel->delete($category, $id);
+        $isDeleted = $this->productModel->deleteProduct($category, $id);
 
-        $isSaved = VM::saveProducts($products, __DIR__ . LOCATION_PRODUCT);
 
-        if (!$isSaved) {
+        if (!$isDeleted) {
             VM::sendResponse((VM::toJson(['error' => 'Error deleting product'])), 500);
         }
 
@@ -187,7 +180,7 @@ class ProductController {
         $id = $this->requestBody[ID];
         $category = $this->requestBody[CATEGORY];
 
-        $product = $this->productModel->all($category, $id);
+        $product = $this->productModel->selectAll($category, $id);
 
         if ($product === null) {
             VM::sendResponse(VM::toJson(['error' => 'Product not found']), 404);

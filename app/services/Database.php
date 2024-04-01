@@ -10,7 +10,7 @@ class Database {
 
     public function __construct()
     {
-        $this->data = VM::readProducts(__DIR__ . '/../../products.json');
+        $this->data = VM::readProducts(__DIR__ . LOCATION_PRODUCT);
     }
 
     protected function getProducts(): ?array
@@ -18,8 +18,8 @@ class Database {
         return $this->data;
     }
 
-    protected function save(array $products, $path): bool
+    protected function save(array $products): bool
     {
-        return VM::saveProducts($products, $path);
+        return VM::saveProducts($products, __DIR__ . LOCATION_PRODUCT);
     }
 }

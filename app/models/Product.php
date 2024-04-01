@@ -16,12 +16,17 @@ class Product extends Database {
         $this->products = $this->getProducts();
     }
 
-    public function all(string $category): ?array
+    public function all(): array
+    {
+        return $this->products;
+    }
+
+    public function selectAll(string $category): ?array
     {
         return $this->products[$category] ?? null;
     }
 
-    public function one(string $category, int $id): ?array
+    public function selectOne(string $category, int $id): ?array
     {
         if (!isset($this->products[$category])) {
             return null;
@@ -36,17 +41,21 @@ class Product extends Database {
         return null;
     }
 
-    public function create(array $requestBody): array
+    public function createProduct(array $requestBody): bool
     {
-        return [
+        $product = [
             ID => VM::generateId($this->products[$requestBody[CATEGORY]], ID),
             PRICE => $requestBody[PRICE],
             NAME => $requestBody[NAME],
             QUANTITY => $requestBody[QUANTITY],
         ];
+
+        array_push($this->products[$requestBody[CATEGORY]], $product);
+
+        return $this->save($this->products);
     }
 
-    public function update(array $updateProduct, array $newData, string $path, bool $patch = false): bool
+    public function updateProduct(array $updateProduct, array $newData, bool $patch = false): bool
     {
         $fields = [PRICE, NAME, QUANTITY];
 
@@ -65,17 +74,10 @@ class Product extends Database {
 
         $this->products[$newData[CATEGORY]][$position] = $updateProduct;
 
-        return $this->save($this->products, $path);
+        return $this->save($this->products, __DIR__ . LOCATION_PRODUCT);
     }
 
-    public function storeProduct(array $product, string $category, string $path): bool
-    {
-        array_push($this->products[$category], $product);
-
-        return $this->save($this->products, $path);
-    }
-
-    public function delete(string $category, int $id): array
+    public function deleteProduct(string $category, int $id): bool
     {
         foreach($this->products[$category] as $key => $product) {
             if ($product['id'] === $id) {
@@ -85,6 +87,6 @@ class Product extends Database {
 
         unset($this->products[$category][$position]);
 
-        return $this->products;
+        return $this->save($this->products, __DIR__ . LOCATION_PRODUCT);
     }
 }
