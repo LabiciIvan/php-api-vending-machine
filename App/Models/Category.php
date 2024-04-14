@@ -1,17 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
-use App\Services\Database;
+use App\Abstracts\AbstractModel;
 
-class Category extends Database {
-
+class Category extends AbstractModel
+{
     private ?array $productsCategory;
 
     public function __construct()
     {
-        parent::__construct();
-
         $this->productsCategory = $this->getProducts();
     }
 

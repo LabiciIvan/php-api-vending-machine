@@ -1,18 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
-use App\Services\Database;
-use App\VM;
+use App\Abstracts\AbstractModel;
 
-class Product extends Database {
+class Product extends AbstractModel {
 
     private ?array $products;
 
     public function __construct()
     {
-        parent::__construct();
-
         $this->products = $this->getProducts();
     }
 
@@ -44,7 +43,7 @@ class Product extends Database {
     public function createProduct(array $requestBody): bool
     {
         $product = [
-            ID => VM::generateId($this->products[$requestBody[CATEGORY]], ID),
+            ID => $this->generateId($this->products[$requestBody[CATEGORY]], ID),
             PRICE => $requestBody[PRICE],
             NAME => $requestBody[NAME],
             QUANTITY => $requestBody[QUANTITY],
