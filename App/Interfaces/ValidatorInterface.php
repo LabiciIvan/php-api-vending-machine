@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Interfaces\Validation;
+namespace App\Interfaces;
 
 interface ValidatorInterface
 {
@@ -13,7 +13,4 @@ interface ValidatorInterface
     public function isArray(string $field, mixed $data): ?string;
 
     public function isRequired(string $field, array $data): ?string;
-
-    public function getErrors(): array;
-
 }

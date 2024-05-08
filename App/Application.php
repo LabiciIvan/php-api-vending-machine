@@ -11,13 +11,13 @@ use App\Services\Response;
 
 class Application
 {
-    public function run()
+    public function run(Kernel $kernel)
     {
-        $kernel = new Kernel();
+        $kernel->router->routes();
 
         $routes = $kernel->router->getRoutes();
 
-        $method = $kernel->request->getMethod();
+        $method = $kernel->request->getHttpMethod();
 
         $endpoint = $kernel->request->getEndpoint();
 

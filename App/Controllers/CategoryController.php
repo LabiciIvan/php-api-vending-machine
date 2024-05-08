@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Request;
+use Exception;
+use App\HttpRequest;
+use App\Services\Log;
 use App\Services\Json;
 use App\Models\Category;
 use App\Services\Response;
@@ -14,40 +16,48 @@ class CategoryController
 {
     private Category $categoryModel;
 
+    private const PATH_PRODUCTS = __DIR__ . '/../../products.json';
+
+    private const CATEGORY = 'category';
+
     public function __construct()
     {
-        $this->categoryModel = new Category();
+        try {
+            $this->categoryModel = new Category(self::PATH_PRODUCTS);
+        } catch (Exception $e) {
+            Log::errors('In CategoryController', $e->getMessage(), __LINE__);
+        }
     }
 
     public function index(): void
     {
-        $categories = $this->categoryModel->selectAll();
+        $categories = $this->categoryModel->all();
 
         Response::send(Json::toJson(['data' => $categories]), 200);
     }
 
-    public function show(Request $request, ValidateCategory $validator): void
+    public function show(HttpRequest $request, ValidateCategory $validator): void
     {
-        $params = $request->getParameter();
+        $params = $request->getParameters();
 
         if ($params === null) {
-            Response::send(Json::toJson(['error' => 'Submitted data could not be read']), 500);
+            Response::send(Json::toJson(['error' => 'Data could not be read']), 500);
         }
 
         $validationError = $validator->validate(
             [
-                CATEGORY => 'string|required'
+                self::CATEGORY => 'string|required'
             ],
             $params
         );
 
         if ($validationError) {
-            Response::send(Json::toJson($validator->getErrors()), 400);
+            Response::send(Json::toJson($validationError), 400);
         }
 
-        $category = $params[CATEGORY];
+        $category = $params[self::CATEGORY];
 
-        $categoryProducts = $this->categoryModel->select($category);
+        $categoryProducts = $this->categoryModel->one($category);
 
         if ($categoryProducts === null) {
             Response::send(Json::toJson(['error' => 'Category products not found']), 404);
@@ -56,7 +66,7 @@ class CategoryController
         Response::send(Json::toJson($categoryProducts), 200);
     }
 
-    public function create(Request $request, ValidateCategory $validator): void
+    public function create(HttpRequest $request, ValidateCategory $validator): void
     {
         $requestData = $request->getData();
 
@@ -66,31 +76,39 @@ class CategoryController
 
         $validationError = $validator->validate(
             [
-                CATEGORY => 'string|required'
+                self::CATEGORY => 'string|required'
             ],
             $requestData
         );
 
         if ($validationError) {
-            Response::send(Json::toJson($validator->getErrors()), 400);
+            Response::send(Json::toJson($validationError), 400);
         }
 
-        $categoryProducts = $this->categoryModel->select($requestData[CATEGORY]);
+        $categoryProducts = $this->categoryModel->one($requestData[self::CATEGORY]);
 
         if ($categoryProducts !== null) {
             Response::send(Json::toJson(['error' => 'Category already exists']), 400);
         }
 
-        $isCreated = $this->categoryModel->createCategory($requestData[CATEGORY]);
+        try {
+            $this->categoryModel->create($requestData);
+        } catch (Exception $e) {
+            Log::errors('In CategoryController', $e->getMessage(), __LINE__);
 
-        if (!$isCreated) {
+            Response::send(Json::toJson(['error' => 'Internal error, try again later']), 500);
+        }
+
+        $isSaved = $this->categoryModel->save(self::PATH_PRODUCTS);
+
+        if (!$isSaved) {
             Response::send(Json::toJson(['error' => 'Error uploading new category']), 400);
         }
 
         Response::send(Json::toJson(['data' => 'Category successfully created']), 200);
     }
 
-    public function update(Request $request, ValidateCategory $validator)
+    public function update(HttpRequest $request, ValidateCategory $validator)
     {
         $requestData = $request->getData();
 
@@ -107,25 +125,33 @@ class CategoryController
         );
 
         if ($validationError) {
-            Response::send(Json::toJson($validator->getErrors()), 400);
+            Response::send(Json::toJson($validationError), 400);
         }
 
-        $categoryProducts = $this->categoryModel->select($requestData[CATEGORY]);
+        $category = $this->categoryModel->one($requestData[CATEGORY]);
 
-        if ($categoryProducts === null) {
+        if ($category === null) {
             Response::send(Json::toJson(['error' => 'Category doesn\'t exists']), 400);
         }
 
-        $isUpdated = $this->categoryModel->updateCategory($requestData);
+        try {
+            $this->categoryModel->update($requestData);
+        } catch (Exception $e) {
+            Log::errors('In CategoryController', $e->getMessage(), __LINE__);
 
-        if (!$isUpdated) {
+            Response::send(Json::toJson(['error' => 'Internal error, try again later']), 500);
+        }
+
+        $isSaved = $this->categoryModel->save(self::PATH_PRODUCTS);
+
+        if (!$isSaved) {
             Response::send(Json::toJson(['error' => 'Error updating category']), 500);
         }
 
         Response::send(Json::toJson(['data' => 'Category updated']), 200);
     }
 
-    public function delete(Request $request, ValidateCategory $validator):void
+    public function delete(HttpRequest $request, ValidateCategory $validator):void
     {
         $requestData = $request->getData();
 
@@ -135,16 +161,16 @@ class CategoryController
 
         $validationError = $validator->validate(
             [
-                CATEGORY => 'string|required',
+                self::CATEGORY => 'string|required',
             ],
             $requestData
         );
 
         if ($validationError) {
-            Response::send(Json::toJson($validator->getErrors()), 400);
+            Response::send(Json::toJson($validationError), 400);
         }
 
-        $categoryProducts = $this->categoryModel->select($requestData[CATEGORY]);
+        $categoryProducts = $this->categoryModel->one($requestData[self::CATEGORY]);
 
         if ($categoryProducts === null) {
             Response::send(Json::toJson(['error' => 'Category doesn\'t exists']), 400);
@@ -154,9 +180,17 @@ class CategoryController
             Response::send(Json::toJson(['error' => 'Category cant\'t be deleted as it contains products']), 400);
         }
 
-        $isDeleted = $this->categoryModel->deleteCategory($requestData[CATEGORY]);
+        try {
+            $this->categoryModel->delete($requestData[self::CATEGORY]);
+        } catch (Exception $e) {
+            Log::errors('In CategoryController', $e->getMessage(), __LINE__);
 
-        if (!$isDeleted) {
+            Response::send(Json::toJson(['error' => 'Internal error, try again later']), 500);
+        }
+
+        $isSaved = $this->categoryModel->save(self::PATH_PRODUCTS);
+
+        if (!$isSaved) {
             Response::send(Json::toJson(['error' => 'Error deleting category']), 500);
         }
 

@@ -4,20 +4,18 @@ declare(strict_types=1);
 
 namespace App\Abstracts;
 
-use App\Interfaces\Validation\ValidatorInterface;
+use App\Interfaces\ValidatorInterface;
 
 abstract class AbstractValidator implements ValidatorInterface
 {
-    public array $errors = [];
-
     protected $availableMethods = [
-        'int'       => 'isInt',
-        'string'    => 'isString',
-        'array'     => 'isArray',
-        'required'  => 'isRequired',
+        'int' => 'isInt',
+        'string' => 'isString',
+        'array' => 'isArray',
+        'required' => 'isRequired',
     ];
 
-    public function validate(array $requiredRules, array $data): bool
+    public function validate(array $requiredRules, array $data): array
     {
         $errors = [];
 
@@ -25,7 +23,7 @@ abstract class AbstractValidator implements ValidatorInterface
 
             $rules = explode('|', $string);
 
-            $isRequired = in_array('required', $rules) ? true : false;
+            $isRequired = in_array('required', $rules);
 
             foreach ($rules as $rule) {
 
@@ -56,9 +54,7 @@ abstract class AbstractValidator implements ValidatorInterface
             }
         }
 
-        $this->errors[] = $errors;
-
-        return $errors ? true : false;
+        return $errors;
     }
 
     public function isInt(string $field, mixed $data): ?string
@@ -67,7 +63,7 @@ abstract class AbstractValidator implements ValidatorInterface
             return null;
         }
 
-        return 'The value for this field must be an integer';
+        return "The '{$field}' value for this field must be an integer";
     }
 
     public function isString(string $field, mixed $data): ?string
@@ -76,17 +72,16 @@ abstract class AbstractValidator implements ValidatorInterface
             return null;
         }
 
-        return 'The value for this field must be a string';
+        return "The '{$field}' value for this field must be a string";
     }
 
     public function isArray(string $field, mixed $data): ?string
     {
-        if (is_string($data[$field])) {
+        if (is_array($data[$field])) {
             return null;
         }
 
-        return 'The value for this field must be an array';
-        return is_array($data);
+        return "The '{$field}' value for this field must be an array";
     }
 
     public function isRequired(string $field, array $data): ?string
@@ -95,11 +90,6 @@ abstract class AbstractValidator implements ValidatorInterface
             return null;
         }
 
-        return 'This field is required';
-    }
-
-    public function getErrors(): array
-    {
-        return $this->errors;
+        return "The '{$field}' field is required";
     }
 }

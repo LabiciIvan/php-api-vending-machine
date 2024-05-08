@@ -4,25 +4,19 @@ declare(strict_types=1);
 
 namespace App;
 
-use App\Request;
-use App\Router;
+use App\HttpRequest;
+use App\RouterAPI;
 
 class Kernel
 {
-    public Request $request;
+    public HttpRequest $request;
 
-    public Router $router;
+    public RouterAPI $router;
 
-    public function __construct()
+    public function __construct(HttpRequest $request, RouterAPI $router)
     {
-        $this->request = new Request();
+        $this->request = $request;
 
-        $this->router = new Router();
+        $this->router = $router;
     }
-
-    public function getRoutes(): array
-    {
-        return $this->router->getRoutes();
-    }
-
 }
