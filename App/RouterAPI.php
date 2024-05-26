@@ -10,7 +10,7 @@ use App\Controllers\ProductController;
 
 class RouterAPI extends AbstractRouterEngine
 {
-    public function routes(): void
+    public function setRoutes(): void
     {
         $this->get('/products-all/', [ProductController::class, 'index']);
 

@@ -6,5 +6,5 @@ interface RoutesManagementInterface
 {
     public function getRoutes(): array;
 
-    public function routes(): void;
+    public function setRoutes(): void;
 }

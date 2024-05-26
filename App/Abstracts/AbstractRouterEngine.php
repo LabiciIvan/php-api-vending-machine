@@ -38,6 +38,4 @@ abstract class AbstractRouterEngine implements RoutesManagementInterface, Routes
     {
         return $this->routes;
     }
-
-    abstract function routes(): void;
 }

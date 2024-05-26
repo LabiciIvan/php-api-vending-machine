@@ -13,7 +13,7 @@ class Application
 {
     public function run(Kernel $kernel)
     {
-        $kernel->router->routes();
+        $kernel->router->setRoutes();
 
         $routes = $kernel->router->getRoutes();
 
