@@ -26,7 +26,6 @@ abstract class AbstractValidator implements ValidatorInterface
             $isRequired = in_array('required', $rules);
 
             foreach ($rules as $rule) {
-
                 if (!$isRequired && !isset($data[$field])) {
                     break;
                 }
@@ -36,20 +35,17 @@ abstract class AbstractValidator implements ValidatorInterface
                     break;
                 }
 
-                $validationMethod = $this->availableMethods[$rule] ?? false;
+                $validationMethod = $this->availableMethods[$rule] ?? null;
 
-                if ($validationMethod) {
+                /** @var string|null $validationError */
+                $validationError = $validationMethod ? $this->$validationMethod($field, $data) : null;
 
-                    $validationError = $this->$validationMethod($field, $data);
-
-                    if ($validationError !== null) {
-
-                        if (!isset($errors[$field])) {
-                            $errors[$field] = [];
-                        }
-
-                        $errors[$field][] = $validationError;
+                if ($validationError !== null) {
+                    if (!isset($errors[$field])) {
+                        $errors[$field] = [];
                     }
+
+                    $errors[$field][] = $validationError;
                 }
             }
         }
