@@ -26,6 +26,8 @@ class CategoryController
             $this->categoryModel = new Category(self::PATH_PRODUCTS);
         } catch (Exception $e) {
             Log::errors('In CategoryController', $e->getMessage(), __LINE__);
+
+            exit('A critical error occurred. Execution stopped.');
         }
     }
 

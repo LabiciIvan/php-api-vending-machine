@@ -34,6 +34,8 @@ class ProductController
             $this->productModel = new Product(self::PATH_PRODUCTS);
         } catch (Exception $e) {
             Log::errors('In ProductController', $e->getMessage(), __LINE__);
+
+            exit('A critical error occurred. Execution stopped.');
         }
     }
 
