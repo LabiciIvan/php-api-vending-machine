@@ -31,7 +31,7 @@ abstract class AbstractValidator implements ValidatorInterface
                 }
 
                 if ($isRequired && !isset($data[$field])) {
-                    $errors[$field][] = $this->isRequired($field, $data);
+                    $errors[] = $this->isRequired($field, $data);
                     break;
                 }
 
@@ -41,11 +41,7 @@ abstract class AbstractValidator implements ValidatorInterface
                 $validationError = $validationMethod ? $this->$validationMethod($field, $data) : null;
 
                 if ($validationError !== null) {
-                    if (!isset($errors[$field])) {
-                        $errors[$field] = [];
-                    }
-
-                    $errors[$field][] = $validationError;
+                    $errors[] = $validationError;
                 }
             }
         }

@@ -6,13 +6,13 @@ namespace App\Services;
 
 class Generate
 {
-    public static function id(array $categoryOfProducts, string $keyID): int
+    public static function id(array $data, string $keyID): int
     {
         $id = 0;
 
-        foreach ($categoryOfProducts as $product) {
-            if ($product[$keyID] >= $id) {
-                $id = $product[$keyID] + 1;
+        foreach ($data as $item) {
+            if ($item[$keyID] >= $id) {
+                $id = $item[$keyID] + 1;
             }
         }
 

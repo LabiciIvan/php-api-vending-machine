@@ -11,7 +11,7 @@ class HttpRequest extends AbstractHttpRequestHandler
 {
     private ?string $endpoint;
 
-    private ?array $parameters;
+    private ?array $parameters = null;
 
     public function __construct()
     {

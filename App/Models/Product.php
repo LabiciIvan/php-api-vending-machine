@@ -8,41 +8,41 @@ use RuntimeException;
 use App\Services\File;
 use App\Services\Json;
 use App\Services\Generate;
-use App\Interfaces\ModelProductInterface;
+use App\Interfaces\ModelInterface;
 
-class Product implements ModelProductInterface
+class Product implements ModelInterface
 {
     private ?array $products;
 
-    private string $idKey = 'id';
+    const ID = 'id';
 
-    private string $priceKey = 'price';
+    const NAME = 'name';
 
-    private string $nameKey = 'name';
+    const PRICE = 'price';
 
-    private string $quantityKey = 'quantity';
+    const QUANTITY  = 'quantity';
 
-    private string $categoryKey = 'category';
+    const CATEGORY_ID = 'category_id';
+
+    const PRODUCTS = 'products';
 
     public function __construct($path)
     {
-        $encodedProducts = File::readFile($path);
+        $dataEncoded = File::readFile($path);
 
-        if ($encodedProducts === null) {
+        if ($dataEncoded === null) {
             throw new RuntimeException('Failed to open stream: No such file or directory');
         }
 
-        $this->products = $encodedProducts ? Json::fromJson($encodedProducts) : null;
+        $dataDecoded = Json::fromJson($dataEncoded);
+
+        $this->products = $dataDecoded[self::PRODUCTS];
     }
 
-    public function one(string $category, int $id): ?array
+    public function one(int $id): ?array
     {
-        if (!isset($this->products[$category])) {
-            return null;
-        }
-
-        foreach ($this->products[$category] as $product) {
-            if ($product[$this->idKey] == $id) {
+        foreach ($this->products as $product) {
+            if ($product[self::ID] === $id) {
                 return $product;
             }
         }
@@ -55,75 +55,70 @@ class Product implements ModelProductInterface
         return $this->products;
     }
 
-    public function create(array $data): int
+    public function create(array $data): array
     {
-        if (!isset($data[$this->categoryKey])) {
-            throw new RuntimeException("Missing `{$this->categoryKey}` key in the array");
-        }
-
-        if (!isset($this->products[$data[$this->categoryKey]])) {
-            throw new RuntimeException("Category `{$data[$this->categoryKey]}` does not exist");
-        }
-
         $product = [
-            $this->idKey => Generate::id(
-                $this->products[$data[$this->categoryKey]],
-                $this->idKey
+            self::ID => Generate::id(
+                $this->products,
+                self::ID
             ),
-            $this->priceKey => $data[$this->priceKey],
-            $this->nameKey => $data[$this->nameKey],
-            $this->quantityKey => $data[$this->quantityKey],
+            self::CATEGORY_ID => $data[self::CATEGORY_ID],
+            self::PRICE => $data[self::PRICE],
+            self::NAME => $data[self::NAME],
+            self::QUANTITY => $data[self::QUANTITY],
         ];
 
-        array_push($this->products[$data[$this->categoryKey]], $product);
+        $this->products[] = $product;
 
-        return $product[$this->idKey];
+        return $this->products;
     }
 
-    public function save(string $path): bool
+    public function save(string $path, array $products, string $entity): bool
     {
-        if (!file_exists($path)) {
-            throw new RuntimeException('Could not find file in which to save data');
+        $dataEncoded = File::readFile($path);
+
+        if ($dataEncoded === null) {
+            throw new RuntimeException('Failed to open stream: No such file or directory');
         }
 
-        $toJsonString = Json::toJson($this->products);
+        $dataDecoded = Json::fromJson($dataEncoded);
 
-        $isSaved = File::writeFile($path, $toJsonString);
+        if (!isset($dataDecoded[$entity])) {
+            throw new RuntimeException("Cannot save data in {$entity} as it does not exist");
+        }
 
-        return $isSaved;
+        $dataDecoded[$entity] = $products;
+
+        $dataEncoded = Json::toJson($dataDecoded);
+
+        return File::writeFile($path, $dataEncoded);
     }
 
-    /**
-     * @throws RuntimeException Product position not found based on the provided id
-     */
-    public function update(array $updateProduct, array $newData = null, bool $patch = false): void
+    public function update(array $updateData, bool $patch = false): array
     {
-        $fields = [$this->priceKey, $this->nameKey, $this->quantityKey];
+        $fields = [self::PRICE, self::NAME, self::QUANTITY];
 
-        foreach ($fields as $field) {
-            $updateProduct[$field] = $patch ? ($newData[$field] ?? $updateProduct[$field]) : $newData[$field];
-        }
+        $id = $updateData[self::ID];
 
-        $position = null;
+        $categoryID = $updateData[self::CATEGORY_ID];
 
-        foreach ($this->products[$newData[$this->categoryKey]] as $key => $product) {
-            if ($product[$this->idKey] === $newData[$this->idKey]) {
-                $position = $key;
-                break;
+        foreach ($this->products as &$product) {
+            if ($product[self::ID] === $id && $product[self::CATEGORY_ID] === $categoryID) {
+                foreach ($fields as $field) {
+                    $product[$field] = $patch ? ($updateData[$field] ?? $product[$field]) : $updateData[$field];
+                }
             }
         }
 
-        if ($position === null) {
-            throw new RuntimeException('Product position not found based on the provided id');
-        }
-
-        $this->products[$newData[$this->categoryKey]][$position] = $updateProduct;
+        return $this->products;
     }
 
-    public function delete(string $category = null, int $id = null): void
+    public function delete(int $id): array
     {
-        foreach($this->products[$category] as $key => $product) {
-            if ($product[$this->idKey] === $id) {
+        $position = null;
+
+        foreach($this->products as $key => $product) {
+            if ($product[self::ID] === $id) {
                 $position = $key;
             }
         }
@@ -132,11 +127,8 @@ class Product implements ModelProductInterface
             throw new RuntimeException('Product position not found based on the provided id');
         }
 
-        unset($this->products[$category][$position]);
-    }
+        unset($this->products[$position]);
 
-    public function existCategory(string $category): bool
-    {
-        return key_exists($category, $this->products);
+        return $this->products;
     }
 }

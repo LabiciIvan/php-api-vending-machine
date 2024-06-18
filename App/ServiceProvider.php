@@ -18,7 +18,7 @@ class ServiceProvider extends ReflectionClass
         parent::__construct($className);
     }
 
-    public function has(): ?array
+    public function hasDependencies(): ?array
     {
         try {
             $method =  $this->getMethod($this->classMethod);

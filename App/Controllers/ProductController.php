@@ -16,17 +16,19 @@ class ProductController
 {
     private Product $productModel;
 
-    private const PATH_PRODUCTS = __DIR__ . '/../../products.json';
+    const PATH_PRODUCTS = __DIR__ . '/../../products.json';
 
-    private const ID = 'id';
+    const ID = 'id';
 
-    private const NAME = 'name';
+    const NAME = 'name';
 
-    private const CATEGORY = 'category';
+    const PRICE = 'price';
 
-    private const PAYMENT_AMOUNT = 'paymentAmount';
+    const PRODUCTS = 'products';
 
-    private const PRICE = 'price';
+    const CATEGORY_ID = 'category_id';
+
+    const PAYMENT_AMOUNT = 'paymentAmount';
 
     public function __construct()
     {
@@ -56,7 +58,6 @@ class ProductController
 
         $validationError = $validator->validate(
             [
-                self::CATEGORY => 'string|required',
                 self::ID => 'string|required',
             ],
             $params
@@ -66,7 +67,7 @@ class ProductController
             Response::send(Json::toJson($validationError), 400);
         }
 
-        $product = $this->productModel->one($params[self::CATEGORY], (int)$params[self::ID]);
+        $product = $this->productModel->one((int)$params[self::ID]);
 
         if ($product === null) {
             Response::send(Json::toJson(['error' => 'Product not found']), 404);
@@ -89,22 +90,10 @@ class ProductController
             Response::send(Json::toJson($validationError), 400);
         }
 
-        $categoryExist = $this->productModel->existCategory($requestData[self::CATEGORY]);
-        
-        if (!$categoryExist) {
-            Response::send(Json::toJson(['error' => 'Category doesn\'t exists']), 404);
-        }
+        $products = $this->productModel->create($requestData);
 
         try {
-            $id = $this->productModel->create($requestData, $requestData[self::CATEGORY]);
-        } catch (Exception $e) {
-            Log::errors('In ProductController', $e->getMessage(), __LINE__);
-
-            Response::send(Json::toJson(['error' => 'Internal error, try again later']), 500);
-        }
-
-        try {
-            $isSaved = $this->productModel->save(self::PATH_PRODUCTS);
+            $isSaved = $this->productModel->save(self::PATH_PRODUCTS, $products, self::PRODUCTS);
         } catch (Exception $e) {
             Log::errors('In ProductController', $e->getMessage(), __LINE__);
 
@@ -115,7 +104,7 @@ class ProductController
             Response::send(Json::toJson(['error' => 'Error uploading new product']), 500);
         }
 
-        Response::send(Json::toJson(['data' => "Product uploaded with id: {$id}."]), 200);
+        Response::send(Json::toJson(['data' => "Product uploaded."]), 200);
     }
 
     public function update(HttpRequest $request, ValidateProduct $validator)
@@ -132,16 +121,16 @@ class ProductController
             Response::send(Json::toJson([$validationError]), 400);
         }
 
-        $product = $this->productModel->one($requestData[self::CATEGORY], $requestData[self::ID]);
+        $product = $this->productModel->one($requestData[self::ID]);
 
         if ($product === null) {
             Response::send(Json::toJson(['error' => 'Product not found']), 404);
         }
 
-        $this->productModel->update($product, $requestData);
+        $products = $this->productModel->update($requestData);
 
         try {
-            $isSaved = $this->productModel->save(self::PATH_PRODUCTS);
+            $isSaved = $this->productModel->save(self::PATH_PRODUCTS, $products, self::PRODUCTS);
         } catch (Exception $e) {
             Log::errors('In ProductController', $e->getMessage(), __LINE__);
 
@@ -169,16 +158,16 @@ class ProductController
             Response::send(Json::toJson([$validationError]), 400);
         }
 
-        $product = $this->productModel->one($requestData[self::CATEGORY], $requestData[self::ID]);
+        $product = $this->productModel->one($requestData[self::ID]);
 
         if ($product === null) {
             Response::send(Json::toJson(['error' => 'Product not found']), 404);
         }
 
-        $this->productModel->update($product, $requestData, true);
+        $products = $this->productModel->update($requestData, true);
 
         try {
-            $isSaved = $this->productModel->save(self::PATH_PRODUCTS);
+            $isSaved = $this->productModel->save(self::PATH_PRODUCTS, $products, self::PRODUCTS);
         } catch (Exception $e) {
             Log::errors('In ProductController', $e->getMessage(), __LINE__);
 
@@ -200,19 +189,22 @@ class ProductController
             Response::send(Json::toJson(['error' => 'Submitted data could not be read']), 500);
         }
 
-        $category = $requestParams[self::CATEGORY];
-        $id = (int)$requestParams[self::ID];
+        $id = isset($requestParams[self::ID]) ? (int)$requestParams[self::ID] : null;
 
-        $product = $this->productModel->one($category, $id);
+        if ($id === null) {
+            Response::send(Json::toJson(['error' => 'Invalid URL parameter to this route']), 403);
+        }
+
+        $product = $this->productModel->one($id);
 
         if ($product === null) {
             Response::send(Json::toJson(['error' => 'Product not found']), 404);
         }
 
-        $this->productModel->delete($category, $id);
+        $products = $this->productModel->delete($id);
 
         try {
-            $isSaved = $this->productModel->save(self::PATH_PRODUCTS);
+            $isSaved = $this->productModel->save(self::PATH_PRODUCTS, $products, self::PRODUCTS);
         } catch (Exception $e) {
             Log::errors('In ProductController', $e->getMessage(), __LINE__);
 
@@ -237,7 +229,7 @@ class ProductController
         $validationError = $validator->validate(
             [
                 self::ID => 'int|required',
-                self::CATEGORY => 'string|required',
+                self::CATEGORY_ID => 'string|required',
                 self::PAYMENT_AMOUNT => 'string|required'
             ],
             $requestData
@@ -248,9 +240,9 @@ class ProductController
         }
 
         $id = $requestData[self::ID];
-        $category = $requestData[self::CATEGORY];
+        $category = $requestData[self::CATEGORY_ID];
 
-        $product = $this->productModel->one($category, (int)$id);
+        $product = $this->productModel->one((int)$id);
 
         if ($product === null) {
             Response::send(Json::toJson(['error' => 'Product not found']), 404);

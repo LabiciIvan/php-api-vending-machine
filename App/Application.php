@@ -33,7 +33,7 @@ class Application
                 // Check if this class method has any dependencies.
                 $provider = new ServiceProvider($className, $classMethod);
 
-                $dependencies = $provider->has();
+                $dependencies = $provider->hasDependencies();
 
                 if ($dependencies) {
                     $instances = array_map(function($class) {

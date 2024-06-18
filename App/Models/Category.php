@@ -7,84 +7,106 @@ namespace App\Models;
 use RuntimeException;
 use App\Services\File;
 use App\Services\Json;
-use App\Interfaces\ModelCategoryInterface;
+use App\Services\Generate;
+use App\Interfaces\ModelInterface;
 
-class Category implements ModelCategoryInterface
+class Category implements ModelInterface
 {
-    private ?array $products;
+    private ?array $category;
 
-    private const CATEGORY = 'category';
+    const ID = 'id';
 
-    private const NEW_CATEGORY = 'newCategory';
+    const NAME = 'name';
+
+    const CATEGORIES = 'categories';
 
     public function __construct($path)
     {
-        $encodedProducts = File::readFile($path);
+        $dataEncoded = File::readFile($path);
 
-        $this->products = $encodedProducts ? Json::fromJson($encodedProducts) : null;
-
-        if ($this->products === null) {
+        if ($dataEncoded === null) {
             throw new RuntimeException('Failed to open stream: No such file or directory');
         }
+
+        $dataDecoded = Json::fromJson($dataEncoded);
+
+        $this->category = $dataDecoded[self::CATEGORIES];
+    }
+
+    public function one(int $id): ?array
+    {
+        foreach ($this->category as $category) {
+            if ($category[self::ID] === $id) {
+                return $category;
+            }
+        }
+
+        return null;
     }
 
     public function all(): ?array
     {
-        $categories = array_keys($this->products);
-
-        return $categories;
-    }
-    
-    public function one(string $category): ?array
-    {
-        return $this->products[$category] ?? null;
+        return $this->category;
     }
 
-    public function create(array $data): void
+    public function create(array $data): array
     {
-        if (!isset($data[self::CATEGORY])) {
-            throw new RuntimeException('Missing `category` key in the array');
-        }
+        $category = [
+            self::ID => Generate::id($this->category, self::ID),
+            self::NAME => $data[self::NAME]
+        ];
 
-        if (isset($this->products[$data[self::CATEGORY]])) {
-            throw new RuntimeException('Can\'t create, category already exists');
-        }
+        $this->category[] = $category;
 
-        $this->products[$data[self::CATEGORY]] = [];
+        return $this->category;
     }
 
-    public function update(array $toUpdate): void
+    public function update(array $updateData, bool $patch = false): array
     {
-        if (!isset($toUpdate[self::NEW_CATEGORY], $toUpdate[self::CATEGORY])) {
-            throw new RuntimeException('Missing `category` or `newCategory` keys in the array');
+        $fields = [self::NAME];
+
+        $id = $updateData[self::ID];
+
+        foreach ($this->category as &$category) {
+            if ($category[self::ID] === $id) {
+                foreach ($fields as $field) {
+                    $category[$field] = $patch ? ($updateData[$field] ?? $category[$field]) : $updateData[$field];
+                }
+            }
         }
 
-        if (!isset($this->products[$toUpdate[self::CATEGORY]])) {
-            throw new RuntimeException("Category `{$toUpdate[self::CATEGORY]}` does not exist");
-        }
-
-        $this->products[$toUpdate[self::NEW_CATEGORY]] = $this->products[$toUpdate[self::CATEGORY]];
-
-        unset($this->products[$toUpdate[self::CATEGORY]]);
+        return $this->category;
     }
 
-    public function delete(string $category): void
+    public function delete(int $id): array
     {
-        if (isset($this->products[$category]) && count($this->products[$category]) > 0) {
-            throw new RuntimeException('Can\'t delete category as it contains products');
+        $position = null;
+
+        foreach($this->category as $key => $item) {
+            if ($item[self::ID] === $id) {
+                $position = $key;
+            }
         }
 
-        if (!isset($this->products[$category])) {
-            throw new RuntimeException("Category `{$category}` does not exist");
-        }
+        unset($this->category[$position]);
 
-        unset($this->products[$category]);
+        return $this->category;
     }
 
-    public function save(string $path): bool
+    public function save(string $path, array $categories, string $entity): bool
     {
-        $encodedProducts = Json::toJson($this->products);
+        $dataEncoded = File::readFile($path);
 
-        return File::writeFile($path, $encodedProducts);
+        if ($dataEncoded === null) {
+            throw new RuntimeException('Failed to open stream: No such file or directory');
+        }
+
+        $dataDecoded = Json::fromJson($dataEncoded);
+
+        $dataDecoded[$entity] = $categories;
+
+        $dataEncoded = Json::toJson($dataDecoded);
+
+        return File::writeFile($path, $dataEncoded);
     }
 }

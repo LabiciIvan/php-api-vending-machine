@@ -10,7 +10,7 @@ class ValidateProduct extends AbstractValidator
 {
     private const ID = 'id';
 
-    private const CATEGORY = 'category';
+    private const CATEGORY_ID = 'category_id';
 
     private const PRICE = 'price';
 
@@ -20,7 +20,7 @@ class ValidateProduct extends AbstractValidator
 
 
     public $rulesCreate = [
-        self::CATEGORY => 'string|required',
+        self::CATEGORY_ID => 'int|required',
         self::PRICE => 'string|required',
         self::NAME => 'string|required',
         self::QUANTITY => 'int|required',
@@ -28,7 +28,7 @@ class ValidateProduct extends AbstractValidator
 
     public $rulesUpdate = [
         self::ID => 'int|required',
-        self::CATEGORY => 'string|required',
+        self::CATEGORY_ID => 'int|required',
         self::NAME => 'string|required',
         self::PRICE => 'string|required',
         self::QUANTITY => 'int|required'
@@ -36,7 +36,7 @@ class ValidateProduct extends AbstractValidator
 
     public $rulesPatch = [
         self::ID => 'int|required', 
-        self::CATEGORY => 'string|required',
+        self::CATEGORY_ID => 'int|required',
         self::NAME => 'string',
         self::PRICE => 'string',
         self::QUANTITY => 'int',
