@@ -2,27 +2,19 @@
 
 declare(strict_types=1);
 
-include 'processes.php';
+require_once __DIR__ . '/vendor/autoload.php';
 
-$request = processURL();
+use App\Application;
+use App\Kernel;
+use App\HttpRequest;
+use App\RouterAPI;
 
-$endpoint = $request['endpoint'];
-$params = $request['params'];
-$method = $request['method'];
+$request = new HttpRequest();
 
-$products = readProducts('products.json');
+$router = new RouterAPI();
 
-switch ($endpoint) {
-    case 'product':
-        processProduct($products, $params, $method);
-        break;
-    case 'products-all':
-        processProductsAll($products, $params, $method);
-        break;
-    case 'product-pay':
-        processProductPay($products, $method);
-        break;
-    default:
-        sendResponse(toJson(['error' => '404 Not Found']), 404);
-        break;
-}
+$kernel = new Kernel($request, $router);
+
+$app = new Application();
+
+$app->run($kernel);
